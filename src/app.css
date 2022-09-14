@@ -1,0 +1,29 @@
+@import url("https://use.typekit.net/oyl4vvt.css");
+
+html {
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+
+body{
+  font-family: droid-sans-mono, monospace;
+  font-weight: 400;
+  font-style: normal;
+
+  --main-color: rgb(227, 56, 144);
+  --title-color: #f8c2e3;
+  --dark-color: #760B45
+}
+
+.fancy-font{
+  font-family: puffin-arcade-dither, sans-serif;
+}
+
+.heading-mono{
+  font-family: mono45-headline, monospace;
+  font-weight: 700;
+}

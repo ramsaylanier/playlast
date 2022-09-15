@@ -1,10 +1,12 @@
 <script>
-	import Axis from '../lib/components/Axis.svelte';
-	import Node from '../lib/components/Node.svelte';
-	import Playlist from '../lib/components/Playlist.svelte';
+	import Axis from '$lib/components/Axis.svelte';
 
-	import { onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
+	import Node from '$lib/components/Node.svelte';
+	import Playlist from '$lib/components/Playlist.svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
+
+	import { onMount, beforeUpdate } from 'svelte';
+
 	import { min, max, select } from 'd3';
 	import { scaleLog, scaleTime, scaleLinear } from 'd3-scale';
 	import { zoom as Zoom } from 'd3-zoom';
@@ -13,12 +15,11 @@
 	import 'normalize.css';
 	import '../app.css';
 
-	/** @type {import('./$types').PageData} */
-	export let data;
+	/** @type {import('./$types').ActionData} */
+	export let form;
 
 	let activeNode;
 	let svgRef;
-	let loaded = false;
 
 	let width = 0;
 	let height = 0;
@@ -35,10 +36,14 @@
 
 	const scaleExtent = [1, Infinity];
 
+	$: data = form ? Object.values(form) : {};
 	$: zoom = Zoom().scaleExtent(scaleExtent).on('zoom', zoomed);
 
 	$: dataAsArray = Object.keys(data).map((key) => {
-		const tracks = data[key].tracks;
+		const value = data[key];
+		if (!value) return;
+
+		const tracks = value.tracks;
 		const lastTrack = tracks[tracks.length - 1];
 		const endTime = moment.unix(lastTrack.startTime + lastTrack.length);
 		const startTime = moment.unix(lastTrack.listStartTime);
@@ -68,26 +73,30 @@
 	});
 
 	onMount(() => {
-		loaded = true;
 		select(svgRef).call(zoom);
 		xScaleCopy = xScale.copy();
-		activeNode = timelineData[0];
+	});
+
+	// set default active node
+	beforeUpdate(() => {
+		if (!activeNode && timelineData) {
+			activeNode = timelineData[0];
+		}
 	});
 </script>
 
 <div class="container">
-	<header class="app-header">
-		{#if loaded}
-			<h1 class="app-title fancy-font" in:fade={{ duration: 1000 }}>PlayLast</h1>
-		{/if}
-	</header>
+	<AppHeader />
 
 	<div class="svg-container" bind:offsetWidth={width} bind:offsetHeight={height}>
 		<svg class="timeline-svg" {width} bind:this={svgRef}>
 			{#each timelineData as node, index}
 				<Node {node} {index} isActive={node.id === activeNode?.id} handleClick={handleNodeClick} />
 			{/each}
-			<Axis scale={xScale} {height} />
+
+			{#if timelineData.length > 0}
+				<Axis scale={xScale} {height} />
+			{/if}
 		</svg>
 	</div>
 
@@ -105,17 +114,6 @@
 		grid-template-rows: auto 1fr 2fr;
 		height: 100vh;
 		width: 100vw;
-	}
-
-	.app-header {
-		background-color: var(--main-color);
-		padding: 1rem;
-	}
-
-	.app-title {
-		margin: 0;
-		font-size: 3rem;
-		color: var(--title-color);
 	}
 
 	.svg-container {

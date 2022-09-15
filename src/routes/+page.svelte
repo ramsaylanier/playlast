@@ -15,8 +15,10 @@
 	import 'normalize.css';
 	import '../app.css';
 
-	/** @type {import('./$types').ActionData} */
-	export let form;
+	/** @type {import('./$types').PageServerLoad} */
+	export let data;
+
+	const { playHistory, location } = data;
 
 	let activeNode;
 	let svgRef;
@@ -36,20 +38,21 @@
 
 	const scaleExtent = [1, Infinity];
 
-	$: data = form ? Object.values(form) : {};
 	$: zoom = Zoom().scaleExtent(scaleExtent).on('zoom', zoomed);
 
-	$: dataAsArray = Object.keys(data).map((key) => {
-		const value = data[key];
+	$: dataAsArray = Object.keys(playHistory).map((key) => {
+		const value = playHistory[key];
 		if (!value) return;
 
 		const tracks = value.tracks;
 		const lastTrack = tracks[tracks.length - 1];
 		const endTime = moment.unix(lastTrack.startTime + lastTrack.length);
 		const startTime = moment.unix(lastTrack.listStartTime);
-		return { ...data[key], id: key, setLength: endTime.diff(startTime, 'minutes') };
+		return { ...playHistory[key], id: key, setLength: endTime.diff(startTime, 'minutes') };
 	});
-	$: colorDomain = dataAsArray.map((d) => d.setLength);
+	$: colorDomain = dataAsArray.map((d) => {
+		return d.setLength;
+	});
 	$: minDate = min(dataAsArray, (d) => d.startTime);
 	$: maxDate = max(dataAsArray, (d) => d.startTime);
 	$: xScale = scaleTime()
@@ -61,7 +64,7 @@
 		.range([margin, width - margin]);
 	$: yScale = scaleLinear()
 		.domain([0, max(dataAsArray, (d) => d.setLength)])
-		.range([height - 50, margin]);
+		.range([height - 52, margin]);
 	$: colorScale = scaleLog()
 		.domain([min(colorDomain), max(colorDomain)])
 		.range([0, 1]);
@@ -86,7 +89,7 @@
 </script>
 
 <div class="container">
-	<AppHeader />
+	<AppHeader dbLocation={location} />
 
 	<div class="svg-container" bind:offsetWidth={width} bind:offsetHeight={height}>
 		<svg class="timeline-svg" {width} bind:this={svgRef}>

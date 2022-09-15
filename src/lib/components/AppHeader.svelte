@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 
 	let loaded = false;
+	export let dbLocation;
 
 	onMount(() => {
 		loaded = true;
@@ -15,7 +16,7 @@
 		<h1 class="app-title fancy-font" in:fade={{ duration: 1000 }}>PlayLast</h1>
 		<form method="POST" action="?/setDatabaseLocation" use:enhance>
 			<label for="location-field">Location of Engine Database</label>
-			<input id="location-field" type="text" name="location" />
+			<input id="location-field" type="text" name="location" bind:value={dbLocation} />
 		</form>
 	{/if}
 </header>

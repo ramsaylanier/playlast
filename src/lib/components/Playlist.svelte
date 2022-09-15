@@ -18,6 +18,13 @@
 	$: trackColorScale = scaleLinear().domain([0, list?.tracks?.length]).range([0.1, 0.6]);
 	$: timeRemaining = Math.max(0, Math.floor(list.setLength - list.setLength * percentScrolled));
 
+	$: if (list && tracksRef) {
+		tracksRef.scroll({
+			left: 0,
+			behavior: 'smooth'
+		});
+	}
+
 	const handleScroll = (e) => {
 		if (trackWidth) {
 			const totalDistance = trackWidth * list.tracks.length;
@@ -57,8 +64,8 @@
 				{@const color = interpolatePuRd(trackColorScale(index + 1))}
 				<div
 					bind:offsetWidth={trackWidth}
-					in:fly={{ y: 100, delay: index * 20 }}
-					out:fade
+					in:fade
+					out:fly={{ y: 20, delay: index * 20 }}
 					animate:flip
 					class="track"
 					style:background={color}

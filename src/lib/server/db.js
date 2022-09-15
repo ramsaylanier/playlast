@@ -11,6 +11,8 @@ export const connectDatabase = (databaseLocation) => {
 export const getPlayHistory = async (location) => {
 	const db = connectDatabase(location);
 
+	if (!db) throw Error('Cannot connect to database.');
+
 	const fields = `
 	Historylist.startTime as listStartTime,
 	HistorylistEntity.listId,
@@ -37,24 +39,32 @@ export const getPlayHistory = async (location) => {
 	WHERE Historylist.startTime > 0
 `;
 
-	// const formatTime = timeFormat('%B %d, %Y');
-	const result = await db.prepare(query).all();
+	try {
+		// const formatTime = timeFormat('%B %d, %Y');
+		const result = await db.prepare(query).all();
 
-	if (result) {
-		const data = result.reduce((previous, current) => {
-			const { listId } = current;
+		if (result) {
+			const data = result.reduce((previous, current) => {
+				const { listId } = current;
 
-			if (previous[listId]) {
-				previous[listId].tracks.push(current);
-			} else {
-				previous[listId] = {
-					startTime: new Date(current.listStartTime * 1000),
-					tracks: [current]
-				};
-			}
-			return previous;
-		}, {});
+				if (previous[listId]) {
+					previous[listId].tracks.push(current);
+				} else {
+					previous[listId] = {
+						id: listId,
+						startTime: new Date(current.listStartTime * 1000),
+						tracks: [current]
+					};
+				}
+				return previous;
+			}, {});
 
-		return Object.values(data);
+			return Object.values(data);
+		}
+	} catch (error) {
+		console.log(error);
+		throw Error(error);
 	}
+
+	return;
 };

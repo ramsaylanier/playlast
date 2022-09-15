@@ -11,14 +11,12 @@
 	import { scaleLog, scaleTime, scaleLinear } from 'd3-scale';
 	import { zoom as Zoom } from 'd3-zoom';
 	import { interpolatePuRd } from 'd3-scale-chromatic';
-	import moment from 'moment';
+
 	import 'normalize.css';
 	import '../app.css';
 
 	/** @type {import('./$types').PageServerLoad} */
 	export let data;
-
-	const { playHistory, location } = data;
 
 	let activeNode;
 	let svgRef;
@@ -27,7 +25,6 @@
 	let height = 0;
 
 	const margin = 20;
-
 	const handleNodeClick = (node) => {
 		activeNode = node;
 	};
@@ -40,21 +37,11 @@
 
 	$: zoom = Zoom().scaleExtent(scaleExtent).on('zoom', zoomed);
 
-	$: dataAsArray = Object.keys(playHistory).map((key) => {
-		const value = playHistory[key];
-		if (!value) return;
-
-		const tracks = value.tracks;
-		const lastTrack = tracks[tracks.length - 1];
-		const endTime = moment.unix(lastTrack.startTime + lastTrack.length);
-		const startTime = moment.unix(lastTrack.listStartTime);
-		return { ...playHistory[key], id: key, setLength: endTime.diff(startTime, 'minutes') };
-	});
-	$: colorDomain = dataAsArray.map((d) => {
+	$: colorDomain = data.playHistory.map((d) => {
 		return d.setLength;
 	});
-	$: minDate = min(dataAsArray, (d) => d.startTime);
-	$: maxDate = max(dataAsArray, (d) => d.startTime);
+	$: minDate = min(data.playHistory, (d) => d.startTime);
+	$: maxDate = max(data.playHistory, (d) => d.startTime);
 	$: xScale = scaleTime()
 		.domain([minDate, maxDate])
 		.range([margin, width - margin])
@@ -63,12 +50,12 @@
 		.domain([minDate, maxDate])
 		.range([margin, width - margin]);
 	$: yScale = scaleLinear()
-		.domain([0, max(dataAsArray, (d) => d.setLength)])
+		.domain([0, max(data.playHistory, (d) => d.setLength)])
 		.range([height - 52, margin]);
 	$: colorScale = scaleLog()
 		.domain([min(colorDomain), max(colorDomain)])
 		.range([0, 1]);
-	$: timelineData = dataAsArray.map((d) => {
+	$: timelineData = data.playHistory.map((d) => {
 		const color = interpolatePuRd(colorScale(d.setLength));
 		const cx = xScale(d.startTime);
 		const cy = yScale(d.setLength);
@@ -89,24 +76,32 @@
 </script>
 
 <div class="container">
-	<AppHeader dbLocation={location} />
+	<AppHeader dbLocation={data.location} />
 
-	<div class="svg-container" bind:offsetWidth={width} bind:offsetHeight={height}>
-		<svg class="timeline-svg" {width} bind:this={svgRef}>
-			{#each timelineData as node, index}
-				<Node {node} {index} isActive={node.id === activeNode?.id} handleClick={handleNodeClick} />
-			{/each}
+	{#if data.error}
+		<div>{data.error}</div>
+	{:else if data.playHistory.length > 0}
+		<div class="svg-container" bind:offsetWidth={width} bind:offsetHeight={height}>
+			<svg class="timeline-svg" {width} bind:this={svgRef}>
+				{#each timelineData as node, index}
+					<Node
+						{node}
+						{index}
+						isActive={node.id === activeNode?.id}
+						handleClick={handleNodeClick}
+					/>
+				{/each}
 
-			{#if timelineData.length > 0}
-				<Axis scale={xScale} {height} />
-			{/if}
-		</svg>
-	</div>
-
-	{#if activeNode}
-		<div class="playlist-container">
-			<Playlist list={activeNode} />
+				{#if timelineData.length > 0}
+					<Axis scale={xScale} {height} />
+				{/if}
+			</svg>
 		</div>
+		{#if activeNode}
+			<div class="playlist-container">
+				<Playlist list={activeNode} />
+			</div>
+		{/if}
 	{/if}
 </div>
 

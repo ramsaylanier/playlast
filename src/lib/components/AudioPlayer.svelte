@@ -5,12 +5,19 @@
 	let audioRef;
 
 	$: activeTrackPath = `${$dbLocation}/../../${$activeTrack?.path}`;
-	$: getFileAndPlay($isPlaying);
+	$: if ($isPlaying && $activeTrack) {
+		start();
+	} else {
+		stop();
+	}
 
-	const getFileAndPlay = async (isPlaying) => {
-		if (isPlaying) {
-			await getFile();
-		}
+	const start = async () => {
+		await getFile();
+		audioRef?.play();
+	};
+
+	const stop = async () => {
+		audioRef?.pause();
 	};
 
 	const getFile = async () => {
@@ -28,12 +35,8 @@
 				const blob = await response.blob();
 
 				audioSrc = URL.createObjectURL(blob);
-				audioRef.src = audioSrc;
-				audioRef.onloadeddata = () => {
-					console.log(audioRef.duration);
-				};
-
-				audioRef.play();
+				// audioRef.src = audioSrc;
+				// audioRef.play();
 			} catch (err) {
 				console.log(err);
 			}

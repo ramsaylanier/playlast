@@ -5,7 +5,7 @@
 	import Playlist from '$lib/components/Playlist.svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 
-	import { dbLocation, activeTrack, activeList } from '$lib/stores/store.js';
+	import { dbLocation, activeList, isPlaying } from '$lib/stores/store.js';
 	import { onMount, beforeUpdate } from 'svelte';
 
 	import { min, max, select } from 'd3';
@@ -30,15 +30,14 @@
 
 	const margin = 20;
 	const handleNodeClick = (list) => {
-		console.log({ list });
 		activeList.set(list);
-		activeTrack.set(list.tracks[0]);
+		isPlaying.set(false);
 	};
 
 	function zoomed(event) {
 		xScale = event.transform.rescaleX(xScaleCopy);
 	}
-	const scaleExtent = [1, Infinity];
+	const scaleExtent = [-Infinity, Infinity];
 	let playHistory = data?.playHistory || [];
 
 	$: zoom = Zoom().scaleExtent(scaleExtent).on('zoom', zoomed);
@@ -76,7 +75,6 @@
 	beforeUpdate(() => {
 		if (!$activeList && timelineData) {
 			activeList.set(timelineData[0]);
-			activeTrack.set(timelineData[0].tracks[0]);
 		}
 	});
 </script>

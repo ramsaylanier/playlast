@@ -1,5 +1,4 @@
 <script>
-	import { activeList, activeTrack, isPlaying } from '$lib/stores/store.js';
 	import Color from 'color';
 	import { fly, fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
@@ -8,9 +7,14 @@
 	import Track from './Track.svelte';
 	import moment from 'moment';
 
+	import { activeList, activeTrack, isPlaying } from '$lib/stores/store.js';
+
 	let tracksRef;
 	let trackWidth;
+	let activeTrackIndex = 0;
+	let mouseDown = false;
 	let percentScrolled = 0;
+	let autoScrollDone = false;
 
 	$: trackLength = $activeList.tracks.length || 0;
 	$: trackDuration = $activeTrack?.length * 1000 || 0;
@@ -22,51 +26,76 @@
 		Math.floor($activeList.setLength - $activeList.setLength * percentScrolled)
 	);
 
+	// reset scroll when tracklist changes
 	$: if ($activeList && tracksRef) {
+		console.log('reset scroll');
 		tracksRef.scroll({
 			left: 0,
 			behavior: 'smooth'
 		});
 	}
 
-	let start, previousTimeStamp;
-	let done = false;
+	// scroll list based on active track duration
+	const startAutoScroll = () => {
+		let start, previousTimeStamp;
 
-	const step = (timestamp) => {
-		if (start === undefined) {
-			start = timestamp;
-		}
-		const elapsed = timestamp - start;
-
-		if (previousTimeStamp !== timestamp) {
-			// Math.min() is used here to make sure the element stops at exactly 200px
-			const count = Math.min(pixelsPerSecond * elapsed, trackDuration);
-			tracksRef.scroll({ left: count, behavior: 'smooth' });
-			if (count === trackDuration) done = true;
-		}
-
-		if (elapsed < trackDuration) {
-			// Stop the animation after 2 seconds
-			previousTimeStamp = timestamp;
-			if (!done) {
-				window.requestAnimationFrame(step);
+		const step = (timestamp) => {
+			if (!$isPlaying) return;
+			if (start === undefined) {
+				start = timestamp;
 			}
-		}
+			const elapsed = timestamp - start;
+
+			if (previousTimeStamp !== timestamp && !mouseDown) {
+				// Math.min() is used here to make sure the element stops at exactly 200px
+				const count = Math.min(pixelsPerSecond * elapsed, trackDuration);
+				tracksRef.scroll({ left: count, behavior: 'smooth' });
+				if (count === trackDuration) autoScrollDone = true;
+			}
+
+			if (elapsed < trackDuration) {
+				// Stop the animation after 2 seconds
+				previousTimeStamp = timestamp;
+				if (!autoScrollDone) {
+					window.requestAnimationFrame(step);
+				}
+			}
+		};
+
+		window.requestAnimationFrame(step);
 	};
 
 	const handleScroll = (e) => {
 		if (trackWidth) {
 			const totalDistance = trackWidth * trackLength;
 			percentScrolled = e.target.scrollLeft / totalDistance;
+			activeTrackIndex = Math.floor(trackLength * percentScrolled);
+			const track = $activeList.tracks[activeTrackIndex];
+			if (!$activeTrack || (track && track.id !== $activeTrack?.id)) {
+				activeTrack.set(track);
+			}
 		}
 	};
 
 	const handleClick = () => {
-		if (!$isPlaying) {
-			console.log('set playig');
-			isPlaying.set(true);
-			window.requestAnimationFrame(step);
-		}
+		const track = $activeList.tracks[activeTrackIndex];
+		activeTrack.set(track);
+		isPlaying.set(true);
+		startAutoScroll();
+	};
+
+	const handleMouseWheel = (e) => {
+		console.log(e);
+	};
+
+	const handleMouseDown = (e) => {
+		console.log(e);
+		mouseDown = true;
+		autoScrollDone = true;
+	};
+
+	const handleMouseUp = (e) => {
+		mouseDown = false;
 	};
 </script>
 
@@ -96,7 +125,14 @@
 			</section>
 		</div>
 
-		<div class="tracks" bind:this={tracksRef} on:scroll={handleScroll}>
+		<div
+			class="tracks"
+			bind:this={tracksRef}
+			on:scroll={handleScroll}
+			on:mousedown={handleMouseDown}
+			on:mousewheel={handleMouseWheel}
+			on:mouseup={handleMouseUp}
+		>
 			{#each $activeList.tracks as track, index (track)}
 				{@const color = interpolatePuRd(trackColorScale(index + 1))}
 				<div

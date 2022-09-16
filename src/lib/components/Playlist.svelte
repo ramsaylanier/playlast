@@ -1,4 +1,5 @@
 <script>
+	import { activeList, activeTrack, isPlaying } from '$lib/stores/store.js';
 	import Color from 'color';
 	import { fly, fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
@@ -7,38 +8,74 @@
 	import Track from './Track.svelte';
 	import moment from 'moment';
 
-	export let list;
-
 	let tracksRef;
 	let trackWidth;
-	let timeRemaining = list.setLength;
 	let percentScrolled = 0;
 
-	$: avgDuration = moment.duration(list.setLength / list.tracks.length, 'minutes');
-	$: trackColorScale = scaleLinear().domain([0, list?.tracks?.length]).range([0.1, 0.6]);
-	$: timeRemaining = Math.max(0, Math.floor(list.setLength - list.setLength * percentScrolled));
+	$: trackLength = $activeList.tracks.length || 0;
+	$: trackDuration = $activeTrack?.length * 1000 || 0;
+	$: pixelsPerSecond = trackWidth / trackDuration;
+	$: avgDuration = moment.duration($activeList.setLength / trackLength, 'minutes');
+	$: trackColorScale = scaleLinear().domain([0, trackLength]).range([0.1, 0.6]);
+	$: timeRemaining = Math.max(
+		0,
+		Math.floor($activeList.setLength - $activeList.setLength * percentScrolled)
+	);
 
-	$: if (list && tracksRef) {
+	$: if ($activeList && tracksRef) {
 		tracksRef.scroll({
 			left: 0,
 			behavior: 'smooth'
 		});
 	}
 
+	let start, previousTimeStamp;
+	let done = false;
+
+	const step = (timestamp) => {
+		if (start === undefined) {
+			start = timestamp;
+		}
+		const elapsed = timestamp - start;
+
+		if (previousTimeStamp !== timestamp) {
+			// Math.min() is used here to make sure the element stops at exactly 200px
+			const count = Math.min(pixelsPerSecond * elapsed, trackDuration);
+			tracksRef.scroll({ left: count, behavior: 'smooth' });
+			if (count === trackDuration) done = true;
+		}
+
+		if (elapsed < trackDuration) {
+			// Stop the animation after 2 seconds
+			previousTimeStamp = timestamp;
+			if (!done) {
+				window.requestAnimationFrame(step);
+			}
+		}
+	};
+
 	const handleScroll = (e) => {
 		if (trackWidth) {
-			const totalDistance = trackWidth * list.tracks.length;
+			const totalDistance = trackWidth * trackLength;
 			percentScrolled = e.target.scrollLeft / totalDistance;
+		}
+	};
+
+	const handleClick = () => {
+		if (!$isPlaying) {
+			console.log('set playig');
+			isPlaying.set(true);
+			window.requestAnimationFrame(step);
 		}
 	};
 </script>
 
-{#if list}
+{#if $activeList}
 	<div class="playlist" transition:fade={{ duration: 1000, delay: 1000 }}>
 		<div class="playlist-meta">
-			<div class="play-head" />
+			<div class="play-head" on:click={handleClick} />
 			<section class="section">
-				<h3>{moment(list.startTime).format('MMM Do Y - hh:mma')}</h3>
+				<h3>{moment($activeList.startTime).format('MMM Do Y - hh:mma')}</h3>
 			</section>
 
 			<section class="section">
@@ -47,7 +84,7 @@
 			</section>
 
 			<section class="section">
-				<h3>{list.tracks.length}</h3>
+				<h3>{trackLength}</h3>
 				<span class="small">tracks</span>
 			</section>
 
@@ -60,7 +97,7 @@
 		</div>
 
 		<div class="tracks" bind:this={tracksRef} on:scroll={handleScroll}>
-			{#each list.tracks as track, index (track)}
+			{#each $activeList.tracks as track, index (track)}
 				{@const color = interpolatePuRd(trackColorScale(index + 1))}
 				<div
 					bind:offsetWidth={trackWidth}

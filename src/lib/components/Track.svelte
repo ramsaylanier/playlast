@@ -7,8 +7,8 @@
 			label: 'Title'
 		},
 		{ id: 'artist', label: 'Artist' },
-		{ id: 'genre', label: 'Genre' },
-		{ id: 'bpmAnalyzed', label: 'BPM', format: (data) => Math.floor(data.bpmAnalyzed) }
+		{ id: 'duration', label: 'Genre' },
+		{ id: 'bpmAnalyzed', label: 'BPM', format: (track) => Math.floor(track.bpmAnalyzed) }
 	];
 </script>
 
@@ -19,7 +19,9 @@
 		</h3>
 
 		<div class="cell">
-			{#if section.format}
+			{#if section.component}
+				<svelte:component this={section.component} {...section.componentProps} />
+			{:else if section.format}
 				{@html section.format(track)}
 			{:else}
 				{track[section.id] || '-'}

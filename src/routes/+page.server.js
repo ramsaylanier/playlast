@@ -9,7 +9,6 @@ export async function load({ cookies }) {
 	if (location) {
 		try {
 			const result = await getPlayHistory(location);
-
 			playHistory = result.map((list) => {
 				if (!list) return;
 				const tracks = list.tracks;

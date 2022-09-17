@@ -1,10 +1,9 @@
 <script>
-	import { dbLocation, activeTrack, isPlaying } from '$lib/stores/store.js';
+	import { activeTrack, isPlaying } from '$lib/stores/store.js';
 
 	let audioSrc = '';
 	let audioRef;
 
-	$: activeTrackPath = `${$dbLocation}/../../${$activeTrack?.path}`;
 	$: if ($isPlaying && $activeTrack) {
 		start();
 	} else {
@@ -25,7 +24,7 @@
 			try {
 				const response = await fetch('/getFile', {
 					method: 'POST',
-					body: JSON.stringify({ path: activeTrackPath }),
+					body: JSON.stringify({ path: $activeTrack?.path }),
 					headers: {
 						'content-type': 'application/json',
 						accept: 'application/json'

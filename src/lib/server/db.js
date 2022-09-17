@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import path from 'path';
 
 export const connectDatabase = (databaseLocation) => {
 	const db = new Database(databaseLocation, {
@@ -46,6 +47,13 @@ export const getPlayHistory = async (location) => {
 		if (result) {
 			const data = result.reduce((previous, current) => {
 				const { listId } = current;
+				console.log('before:', current.path);
+				// if (!path.isAbsolute(current.path)) {
+				// current.path = `${location}/../../${current.path}`;
+				const file = path.resolve(current.path);
+
+				console.log({ file });
+				// }
 
 				if (previous[listId]) {
 					previous[listId].tracks.push(current);

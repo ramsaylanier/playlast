@@ -81,9 +81,6 @@
 
 <div class="container">
 	<AppHeader dbLocation={data.location} />
-
-	<AudioPlayer />
-
 	{#if data}
 		{#if data.error}
 			<div>{data.error}</div>
@@ -106,6 +103,7 @@
 			</div>
 			{#if $activeList}
 				<div class="playlist-container">
+					<AudioPlayer />
 					<Playlist />
 				</div>
 			{/if}
@@ -138,6 +136,5 @@
 		overflow: auto;
 		position: relative;
 		z-index: 10;
-		border-top: 3px solid var(--main-color);
 	}
 </style>

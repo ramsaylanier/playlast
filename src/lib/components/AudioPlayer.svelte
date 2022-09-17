@@ -33,10 +33,7 @@
 				});
 
 				const blob = await response.blob();
-
 				audioSrc = URL.createObjectURL(blob);
-				// audioRef.src = audioSrc;
-				// audioRef.play();
 			} catch (err) {
 				console.log(err);
 			}

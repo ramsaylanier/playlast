@@ -25,6 +25,7 @@
 	});
 	$: minDate = min($playHistory, (d) => d.startTime);
 	$: maxDate = max($playHistory, (d) => d.startTime);
+	$: longestSet = max($playHistory, (d) => d.setLength);
 	$: xScale = scaleTime()
 		.domain([minDate, maxDate])
 		.range([margin, width - margin]);
@@ -32,7 +33,7 @@
 		.domain([minDate, maxDate])
 		.range([margin, width - margin]);
 	$: yScale = scaleLinear()
-		.domain([0, max($playHistory, (d) => d.setLength)])
+		.domain([0, longestSet])
 		.range([height - 52, margin]);
 	$: colorScale = scaleLog()
 		.domain([min(colorDomain), max(colorDomain)])

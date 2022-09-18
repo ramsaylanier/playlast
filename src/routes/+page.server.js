@@ -2,10 +2,12 @@ import { connectDatabase } from '$lib/server/db';
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-	setDatabaseLocation: async ({ request }) => {
+	connectDatabaseByFileBuffer: async ({ request }) => {
 		const data = await request.formData();
-		const databaseFile = data.get('database');
+		const databaseFile = data.get('file');
+		const databaseType = data.get('type');
 		const buffer = await databaseFile.arrayBuffer();
-		connectDatabase(buffer);
+		const history = await connectDatabase({ type: databaseType, options: { buffer } });
+		return history;
 	}
 };

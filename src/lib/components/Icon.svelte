@@ -1,6 +1,5 @@
 <script>
 	export let name;
-	export let size = 24;
 
 	const icons = {
 		play: {

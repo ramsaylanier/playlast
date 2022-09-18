@@ -24,6 +24,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@journeyapps/sqlcipher": "^5.3.1",
 		"better-sqlite3": "^7.6.2",
 		"color": "^4.2.3",
 		"d3": "^7.6.1",
@@ -31,6 +32,7 @@
 		"moment": "^2.29.4",
 		"mysql2": "^2.3.3",
 		"normalize.css": "^8.0.1",
+		"sql.js": "^1.8.0",
 		"sqlite3": "^5.0.11"
 	}
 }

@@ -1,10 +1,32 @@
 <script>
-	import { enhance } from '$app/forms';
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
+	import { database, playHistory } from '$lib/stores/store.js';
+
 	let loaded = false;
-	export let dbLocation;
+
+	const handleClick = async () => {
+		const [fileHandle] = await window.showOpenFilePicker();
+		const file = await fileHandle.getFile();
+		const formData = new FormData();
+		formData.append('database', file);
+
+		try {
+			await fetch('?/setDatabaseLocation', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = await fetch('/getPlayHistory');
+			const data = await result.json();
+			playHistory.set(data.playHistory);
+
+			database.set(file);
+		} catch (err) {
+			console.log(err);
+		}
+	};
 
 	onMount(() => {
 		loaded = true;
@@ -14,10 +36,10 @@
 <header class="app-header">
 	{#if loaded}
 		<h1 class="app-title fancy-font" in:fade={{ duration: 1000 }}>PlayLast</h1>
-		<form method="POST" action="?/setDatabaseLocation" use:enhance>
-			<label for="location-field">Location of Engine Database</label>
-			<input id="location-field" type="text" name="location" bind:value={dbLocation} />
-		</form>
+		<button on:click={handleClick}>Set Database</button>
+		{#if $database}
+			<span>{$database.name}</span>
+		{/if}
 	{/if}
 </header>
 
@@ -35,22 +57,5 @@
 		font-size: 3rem;
 		color: var(--title-color);
 		flex: 1;
-	}
-
-	form {
-		flex: 1;
-		font-size: 0.8rem;
-	}
-	label {
-		display: block;
-		margin-bottom: 0.5rem;
-		color: var(--title-color);
-	}
-	input {
-		appearance: none;
-		border: 0;
-		border-radius: 3px;
-		padding: 0.5rem;
-		width: 100%;
 	}
 </style>

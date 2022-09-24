@@ -5,9 +5,11 @@ export const normalizeHistory = (history) => {
 
 	const data = history.reduce((previous, current) => {
 		const { listId } = current;
+		console.log({ ...current });
 
 		current.startTime = moment(current.startTime).unix() * 1000;
 		current.listStartTime = moment(current.listStartTime).unix() * 1000;
+		console.log({ ...current });
 
 		if (previous[listId]) {
 			previous[listId].tracks.push(current);
@@ -21,19 +23,13 @@ export const normalizeHistory = (history) => {
 		return previous;
 	}, {});
 
-	console.log({ data });
-
 	return Object.values(data).map((list) => {
 		if (!list) return;
 		const tracks = list.tracks;
 		const lastTrack = tracks[tracks.length - 1];
-
-		// console.log({ lastTrack });
-
 		const endTime = moment.unix(lastTrack.startTime + lastTrack.length);
-		// console.log({ endTime });
 		const startTime = moment.unix(lastTrack.listStartTime);
-		const setLength = endTime.diff(startTime, 'minutes');
+		const setLength = moment.unix(endTime - startTime).minutes();
 		return { ...list, setLength };
 	});
 };

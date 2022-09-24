@@ -20,8 +20,8 @@ const RekordboxDB = (database) => {
 				const db = this.db;
 				const fields = `
         djmdHistory.ID as listId,
-        djmdHistory.created_at as listStartTime,
-				djmdSongHistory.created_at as startTime,
+        datetime(djmdHistory.created_at, "auto") as listStartTime,
+				datetime(djmdSongHistory.created_at, "auto") as startTime,
         djmdContent.ID as Id,
         djmdContent.FolderPath as path,
         djmdContent.FilenameL as filename,

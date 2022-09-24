@@ -1,4 +1,5 @@
 <script>
+	import moment from 'moment';
 	export let track;
 
 	const sections = [
@@ -7,8 +8,13 @@
 			label: 'Title'
 		},
 		{ id: 'artist', label: 'Artist' },
-		{ id: 'duration', label: 'Genre' },
-		{ id: 'bpmAnalyzed', label: 'BPM', format: (track) => Math.floor(track.bpmAnalyzed) }
+		{ id: 'genre', label: 'Genre' },
+		{
+			id: 'length',
+			label: 'Length',
+			format: (track) => moment(track.length * 1000).format('m:ss')
+		},
+		{ id: 'bpm', label: 'BPM', format: (track) => Math.floor(track.bpm) }
 	];
 </script>
 

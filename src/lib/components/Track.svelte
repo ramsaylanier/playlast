@@ -14,7 +14,12 @@
 			label: 'Length',
 			format: (track) => moment(track.length * 1000).format('m:ss')
 		},
-		{ id: 'bpm', label: 'BPM', format: (track) => Math.floor(track.bpm) }
+		{ id: 'bpm', label: 'BPM', format: (track) => Math.floor(track.bpm) },
+		{
+			id: 'startTime',
+			label: 'Start Time',
+			format: (track) => moment.unix(track.startTime).format('hh:mma')
+		}
 	];
 </script>
 

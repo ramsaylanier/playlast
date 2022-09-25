@@ -7,7 +7,7 @@ export const actions = {
 		const databaseFile = data.get('file');
 		const databaseType = data.get('type');
 		const buffer = await databaseFile.arrayBuffer();
-		const history = await connectDatabase({ type: databaseType, options: { buffer } });
+		const history = await connectDatabase({ request, type: databaseType, options: { buffer } });
 		return history;
 	}
 };

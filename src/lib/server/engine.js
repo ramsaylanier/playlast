@@ -6,9 +6,9 @@ const EngineDB = (database) => {
 		db: database,
 		getPlayHistory: async function () {
 			const fields = `
-        datetime(Historylist.startTime, "auto") as listStartTime,
+        Historylist.startTime as listStartTime,
         HistorylistEntity.listId, 
-        datetime(HistorylistEntity.startTime, "auto") as startTime,
+        HistorylistEntity.startTime as startTime,
         Track.id,
         Track.path,
         Track.filename,

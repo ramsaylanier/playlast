@@ -1,76 +1,28 @@
-import Database from 'better-sqlite3';
+import sqljs from 'sql.js';
+import sqlite3 from '@journeyapps/sqlcipher';
 import path from 'path';
+import EngineDB from './engine.js';
+import RekordboxDB from './rekordbox.js';
+sqlite3.verbose();
 
-export const connectDatabase = (databaseLocation) => {
-	const db = new Database(databaseLocation, {
-		verbose: console.log
-	});
+export let db;
 
-	return db;
-};
-
-export const getPlayHistory = async (location) => {
-	const db = connectDatabase(location);
-
-	if (!db) throw Error('Cannot connect to database.');
-
-	const fields = `
-	Historylist.startTime as listStartTime,
-	HistorylistEntity.listId,
-	HistorylistEntity.startTime,
-	Track.id,
-	Track.filename,
-	Track.length, 
-	Track.bpmAnalyzed,
-	Track.title,
-	Track.path,
-	Track.artist,
-	Track.album,
-	Track.genre,
-	Track.key,
-	Track.rating
-`;
-	const query = `
-	SELECT ${fields}
-	FROM Historylist
-	INNER JOIN HistorylistEntity
-	ON HistoryListEntity.listId = Historylist.id
-	INNER JOIN Track
-	ON HistoryListEntity.trackId = Track.id
-	WHERE Historylist.startTime > 0
-`;
-
+export const connectDatabase = async ({ type, options, request }) => {
+	console.log({ request });
 	try {
-		// const formatTime = timeFormat('%B %d, %Y');
-		const result = await db.prepare(query).all();
-
-		if (result) {
-			const data = result.reduce((previous, current) => {
-				const { listId } = current;
-
-				if (current.path.charAt(0) === '.') {
-					current.path = `${location}/../../${current.path}`;
-					current.path = path.resolve(current.path);
-				}
-
-				if (previous[listId]) {
-					previous[listId].tracks.push(current);
-				} else {
-					previous[listId] = {
-						id: listId,
-						startTime: new Date(current.listStartTime * 1000),
-						tracks: [current]
-					};
-				}
-				return previous;
-			}, {});
-
-			return Object.values(data);
+		if (type === 'Rekordbox') {
+			const filename = 'master.db';
+			const filePath = '/Volumes/Seagate/PIONEER/Master';
+			const db = RekordboxDB(new sqlite3.Database(path.resolve(`${filePath}/${filename}`)));
+			const history = await db.getPlayHistory();
+			return history;
+		} else if (type === 'Engine DJ') {
+			const SQL = await sqljs();
+			const db = EngineDB(new SQL.Database(new Uint8Array(options.buffer)));
+			const history = await db.getPlayHistory();
+			return history;
 		}
-	} catch (error) {
-		console.log(error);
-		throw Error(error);
+	} catch (err) {
+		console.log({ err });
 	}
-
-	return;
 };

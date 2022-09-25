@@ -96,7 +96,6 @@
 
 	const handleMouseUp = () => {
 		mouseDown = false;
-		console.log({ dx });
 		if (dx > 0) {
 			isPlaying.set(true);
 		}

@@ -1,10 +1,69 @@
 <script>
-	import { enhance } from '$app/forms';
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
+	import { database, databaseType, playHistory } from '$lib/stores/store.js';
+
 	let loaded = false;
-	export let dbLocation;
+
+	const databaseTypes = ['Rekordbox', 'Engine DJ'];
+
+	const connectAndGetHistory = async (file) => {
+		let result, data;
+
+		try {
+			if (file) {
+				const formData = new FormData();
+				formData.append('file', file);
+				formData.append('type', $databaseType);
+				result = await fetch('?/connectDatabaseByFileBuffer', {
+					method: 'POST',
+					body: formData
+				});
+
+				result = await result.json();
+				data = result.data;
+			} else {
+				result = await fetch('/connectDatabase', {
+					method: 'POST',
+					body: JSON.stringify({ type: $databaseType }),
+					headers: {
+						'content-type': 'application/json',
+						accept: 'application/json'
+					}
+				});
+				data = await result.json();
+			}
+
+			playHistory.set(data);
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
+	const handleChange = async (e) => {
+		const value = e.target.value;
+		databaseType.set(value);
+
+		// connect automatically for rekordbox
+		if (value === databaseTypes[0]) {
+			connectAndGetHistory();
+		}
+	};
+
+	const handleClick = async () => {
+		const [fileHandle] = await window.showOpenFilePicker();
+		const file = await fileHandle.getFile();
+		const formData = new FormData();
+		formData.append('database', file);
+
+		try {
+			connectAndGetHistory(file);
+			database.set(file);
+		} catch (err) {
+			console.log(err);
+		}
+	};
 
 	onMount(() => {
 		loaded = true;
@@ -14,10 +73,17 @@
 <header class="app-header">
 	{#if loaded}
 		<h1 class="app-title fancy-font" in:fade={{ duration: 1000 }}>PlayLast</h1>
-		<form method="POST" action="?/setDatabaseLocation" use:enhance>
-			<label for="location-field">Location of Engine Database</label>
-			<input id="location-field" type="text" name="location" bind:value={dbLocation} />
-		</form>
+		<labell>Select Database Type</labell>
+		<select on:change={handleChange} bind:value={$databaseType}>
+			<option disabled selected value>--select</option>
+			{#each databaseTypes as type}
+				<option value={type}>{type}</option>
+			{/each}
+		</select>
+
+		{#if $databaseType == databaseTypes[1]}
+			<button on:click={handleClick}>Select Database</button>
+		{/if}
 	{/if}
 </header>
 
@@ -35,22 +101,5 @@
 		font-size: 3rem;
 		color: var(--title-color);
 		flex: 1;
-	}
-
-	form {
-		flex: 1;
-		font-size: 0.8rem;
-	}
-	label {
-		display: block;
-		margin-bottom: 0.5rem;
-		color: var(--title-color);
-	}
-	input {
-		appearance: none;
-		border: 0;
-		border-radius: 3px;
-		padding: 0.5rem;
-		width: 100%;
 	}
 </style>
